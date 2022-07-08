@@ -1,0 +1,292 @@
+---
+  - name: 3.1.1 Ensure IP forwarding is disabled (Scored)
+    shell: sysctl net.ipv4.ip_forward
+    register: out411
+    failed_when: >
+      "net.ipv4.ip_forward = 0" not in out411.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - name: 3.1.2 Ensure packet redirect sending is disabled (Scored)
+    shell: sysctl net.ipv4.conf.all.send_redirects;  sysctl net.ipv4.conf.default.send_redirects
+    register: out412
+    failed_when: >
+      "net.ipv4.conf.all.send_redirects = 0" not in out412.stdout or "net.ipv4.conf.default.send_redirects = 0" not in out412.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: sysctl -w net.ipv4.conf.all.send_redirects=0;sysctl -w net.ipv4.conf.default.send_redirects=0;sysctl -w net.ipv4.route.flush=1
+    ignore_errors: true
+    when: out412 is failed and remediation == 'YES'
+
+
+
+  - name: 3.2.1 Ensure source routed packets are not accepted (Scored)
+    shell: sysctl net.ipv4.conf.all.accept_source_route;  sysctl net.ipv4.conf.default.accept_source_route
+    register: out421
+    failed_when: >
+      "net.ipv4.conf.all.accept_source_route = 0" not in out421.stdout or 
+      "net.ipv4.conf.default.accept_source_route = 0" not in out421.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.conf.all.accept_source_route=0;
+      sysctl -w net.ipv4.conf.default.accept_source_route=0;
+      sysctl -w net.ipv6.conf.all.accept_source_route=0;
+      sysctl -w net.ipv6.conf.default.accept_source_route=0;
+      sysctl -w net.ipv4.route.flush=1;
+      sysctl -w net.ipv6.route.flush=1;
+    ignore_errors: true
+    when: out421 is failed and remediation == 'YES'
+
+  - name: 3.2.2 Ensure ICMP redirects are not accepted (Scored)
+    shell: sysctl net.ipv4.conf.all.accept_redirects;  sysctl net.ipv4.conf.default.accept_redirects
+    register: out422
+    failed_when: >
+      "net.ipv4.conf.all.accept_redirects = 0" not in out422.stdout or 
+      "net.ipv4.conf.default.accept_redirects = 0" not in out422.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        sysctl -w net.ipv4.conf.all.accept_redirects=0
+        sysctl -w net.ipv4.conf.default.accept_redirects=0
+        sysctl -w net.ipv6.conf.all.accept_redirects=0
+        sysctl -w net.ipv6.conf.default.accept_redirects=0
+        sysctl -w net.ipv4.route.flush=1
+        sysctl -w net.ipv6.route.flush=1
+  
+    ignore_errors: true
+    when: out422 is failed and remediation == 'YES'
+
+  - name: 3.2.3 Ensure secure ICMP redirects are not accepted (Scored)
+    shell: sysctl net.ipv4.conf.all.secure_redirects;  sysctl net.ipv4.conf.default.secure_redirects
+    register: out422
+    failed_when: >
+      "net.ipv4.conf.all.secure_redirects = 0" not in out422.stdout or 
+      "net.ipv4.conf.default.secure_redirects = 0" not in out422.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.conf.all.secure_redirects=0
+      sysctl -w net.ipv4.conf.default.secure_redirects=0
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out422 is failed and remediation == 'YES'
+
+  - name: 3.2.4 Ensure suspicious packets are logged (Scored)
+    shell: sysctl net.ipv4.conf.all.log_martians; sysctl net.ipv4.conf.default.log_martians;
+    register: out424
+    failed_when: >
+      "net.ipv4.conf.all.log_martians = 1" not in out424.stdout or 
+      "net.ipv4.conf.default.log_martians = 1" not in out424.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.conf.all.log_martians=1
+      sysctl -w net.ipv4.conf.default.log_martians=1
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out424 is failed and remediation == 'YES'
+
+  - name: 3.2.5 Ensure broadcast ICMP requests are ignored (Scored)
+    shell: sysctl net.ipv4.icmp_echo_ignore_broadcasts
+    register: out425
+    failed_when: >
+      "net.ipv4.icmp_echo_ignore_broadcasts = 1" not in out425.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out425 is failed and remediation == 'YES'
+
+  - name: 3.2.6 Ensure bogus ICMP responses are ignored (Scored)
+    shell: sysctl net.ipv4.icmp_ignore_bogus_error_responses
+    register: out426
+    failed_when: >
+      "net.ipv4.icmp_ignore_bogus_error_responses = 1" not in out426.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.icmp_ignore_bogus_error_responses=1
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out425 is failed and remediation == 'YES'
+
+  - name: 3.2.7 Ensure Reverse Path Filtering is enabled (Scored)
+    shell: sysctl net.ipv4.conf.all.rp_filter;sysctl net.ipv4.conf.default.rp_filter
+    register: out426
+    failed_when: >
+      "net.ipv4.conf.all.rp_filter = 1" not in out426.stdout or
+      "net.ipv4.conf.default.rp_filter = 1" not in out426.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.conf.all.rp_filter=1
+      sysctl -w net.ipv4.conf.default.rp_filter=1
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out426 is failed and remediation == 'YES'
+
+
+  - name: 3.2.8 Ensure TCP SYN Cookies is enabled (Scored)
+    shell: sysctl net.ipv4.tcp_syncookies
+    register: out428
+    failed_when: >
+      "net.ipv4.tcp_syncookies = 1" not in out428.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv4.tcp_syncookies=1
+      sysctl -w net.ipv4.route.flush=1
+  
+    ignore_errors: true
+    when: out428 is failed and remediation == 'YES'
+
+  - name: 3.2.9 Ensure IPv6 router advertisements are not accepted (Scored)
+    shell: sysctl net.ipv6.conf.all.accept_ra;  sysctl net.ipv6.conf.default.accept_ra
+    register: out4411
+    failed_when: >
+      "net.ipv6.conf.all.accept_ra = 0" not in out4411.stdout or 
+      "net.ipv6.conf.default.accept_ra = 0" not in out4411.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+      sysctl -w net.ipv6.conf.all.accept_ra=0
+      sysctl -w net.ipv6.conf.default.accept_ra=0
+      sysctl -w net.ipv6.route.flush=1
+  
+    ignore_errors: true
+    when: out4411 is failed and remediation == 'YES'
+
+  # - name: 3.3.1 Ensure TCP Wrappers is installed (Not Scored)
+  #   shell: rpm -q tcp_wrappers || dpkg -s tcpd
+  #   register: out451
+  #   changed_when: false
+  #   ignore_errors: true
+  #   failed_when: >
+  #     'not installed' in out451.stdout 
+
+  # - shell: |
+  #      yum install tcp_wrappers -y;apt-get install tcpd -y;zypper install tcpd -y
+  #   ignore_errors: true
+  #   when: out is failed and remediation == 'YES'
+
+  # - name: 3.3.2 Ensure /etc/hosts.allow is configured (Not Scored)
+  #   shell: cat /etc/hosts.allow
+  #   register: out
+  #   changed_when: false
+  #   ignore_errors: true
+  #   failed_when: >
+  #     out.stdout | length == 0
+
+  # - shell: |
+  #      echo 'ALL: ALL' >/etc/hosts.allow
+  #   ignore_errors: true
+  #   when: out is failed and remediation == 'YES'
+
+  # - name: 3.3.3 Ensure /etc/hosts.deny is configured (Not Scored)
+  #   shell: cat /etc/hosts.deny
+  #   register: out
+  #   changed_when: false
+  #   ignore_errors: true
+  #   failed_when: >
+  #     'ALL: ALL' not in out.stdout
+
+  # - shell: |
+  #      echo 'ALL: ALL' >/etc/hosts.deny
+  #   ignore_errors: true
+  #   when: out is failed and remediation == 'YES'
+
+  - name: 3.3.4 Ensure permissions on /etc/hosts.allow are configured (Scored)
+    shell: (stat /etc/hosts.allow) | grep 0644
+    register: out
+    failed_when: >
+      out.stdout | length == 0 and "No such file or directory" not in out.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /etc/hosts.allow;chmod 644 /etc/hosts.allow
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 3.3.5 Ensure permissions on /etc/hosts.deny are configured (Scored)
+    shell: (stat /etc/hosts.deny) | grep 0644
+    register: out
+    failed_when: >
+      out.stdout | length == 0 and "No such file or directory" not in out.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /etc/hosts.deny;chmod 644 /etc/hosts.deny
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 3.4.1 Ensure DCCP is disabled (Scored)
+    shell: modprobe -n -v dccp
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module dccp not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install dccp /bin/true' >/etc/modprobe.d/dccp.conf
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 3.4.2 Ensure SCTP is disabled (Scored)
+    shell: modprobe -n -v sctp
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module sctp not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install sctp /bin/true' >/etc/modprobe.d/sctp.conf
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 3.4.3 Ensure RDS is disabled (Scored)
+    shell: modprobe -n -v rds
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module rds not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install rds /bin/true' >/etc/modprobe.d/rds.conf
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 3.4.4 Ensure TIPC is disabled (Scored)
+    shell: modprobe -n -v tipc
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module tipc not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install tipc /bin/true' >/etc/modprobe.d/tipc.conf
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'

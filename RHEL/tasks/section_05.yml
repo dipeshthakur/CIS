@@ -1,0 +1,630 @@
+---
+  - name: 5.1.1 Ensure cron daemon is enabled (Scored)
+    shell: systemctl is-enabled crond
+    register: out
+    failed_when: >
+     "enabled" not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chkconfig crond on;systemctl enable crond;update-rc.d crond enable
+    ignore_errors: true
+    when: out is failed and remediation == 'YES' 
+
+  - name: 5.1.2 Ensure permissions on /etc/crontab are configured (Scored)
+    shell: stat /etc/crontab
+    register: out
+    failed_when: >
+     '0600' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/crontab;chmod 600 /etc/crontab
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.3 Ensure permissions on /etc/cron.hourly are configured (Scored)
+    shell: stat /etc/cron.hourly
+    register: out
+    failed_when: >
+     '0700' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/cron.hourly;chmod 700 /etc/cron.hourly
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.4 Ensure permissions on /etc/cron.daily are configured (Scored)
+    shell: stat /etc/cron.daily
+    register: out
+    failed_when: >
+     '0700' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/cron.daily;chmod 700 /etc/cron.daily
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.5 Ensure permissions on /etc/cron.weekly are configured (Scored)
+    shell: stat /etc/cron.weekly
+    register: out
+    failed_when: >
+     '0700' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/cron.weekly;chmod 700 /etc/cron.weekly
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.6 Ensure permissions on /etc/cron.monthly are configured (Scored)
+    shell: stat /etc/cron.monthly
+    register: out
+    failed_when: >
+     '0700' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/cron.monthly;chmod 700 /etc/cron.monthly
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.7 Ensure permissions on /etc/cron.d are configured (Scored)
+    shell: stat /etc/cron.d
+    register: out
+    failed_when: >
+     '0700' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/cron.d;chmod 700 /etc/cron.d
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.1.8 Ensure at/cron is restricted to authorized users (Scored)
+    shell: stat /etc/cron.deny;stat /etc/at.deny;stat /etc/cron.allow;stat /etc/at.allow
+    register: out
+    failed_when: >
+     '0600' not in out.stdout or '/etc/cron.deny' not in out.stderr or '/etc/at.deny' not in out.stderr
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        rm /etc/cron.deny;rm /etc/at.deny;touch /etc/cron.allow;touch /etc/at.allow;chmod 600 /etc/cron.allow;chmod 600 /etc/at.allow;chown root:root /etc/cron.allow;chown root:root /etc/at.allow
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.1 Ensure permissions on /etc/ssh/sshd_config are configured (Scored)
+    shell: stat /etc/ssh/sshd_config
+    register: out
+    failed_when: >
+     '0600' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        chown root:root /etc/ssh/sshd_config;chmod 600 /etc/ssh/sshd_config
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.2 Ensure permissions on SSH private host key files are configured (Scored)
+    shell: if [ $(stat /etc/ssh/ssh_host_*_key | grep -c  /etc/ssh/ssh_host) = $(stat /etc/ssh/ssh_host_*_key | grep -c 0600) ]; then echo "ok";else echo "no";fi
+    register: out
+    failed_when: >
+     'ok' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        find /etc/ssh -xdev -type f -name 'ssh_host_*_key' -exec chown root:root {} \;
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - shell: |
+        find /etc/ssh -xdev -type f -name 'ssh_host_*_key' -exec chmod 0600 {} \;
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.3 Ensure permissions on SSH public host key files are configured (Scored)
+    shell: if [ $(stat /etc/ssh/ssh_host_*_key.pub | grep -c /etc/ssh/ssh_host) = $(stat /etc/ssh/ssh_host_*_key.pub | grep -c 0644) ]; then echo "ok";else echo "no";fi
+    register: out
+    failed_when: >
+     'ok' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        find /etc/ssh -xdev -type f -name 'ssh_host_*_key.pub' -exec chmod 0644 {} \;find /etc/ssh -xdev -type f -name 'ssh_host_*_key.pub' -exec chown root:root {} \;
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.4 Ensure SSH Protocol is set to 2 (Scored)
+    shell: grep ^Protocol /etc/ssh/sshd_config
+    register: out
+    failed_when: >
+     '2' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^Protocol\\s+"
+      line: "Protocol 2"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+
+
+
+  - name: 5.2.5 Ensure SSH LogLevel is appropriate (Scored)
+    shell: sshd -T | grep loglevel
+    register: out
+    failed_when: >
+     'INFO' not in out.stdout and 'VERBOSE' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+
+  - lineinfile:
+      state: present
+      regexp: "^LogLevel\\s+"
+      line: "LogLevel INFO"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.6 Ensure SSH X11 forwarding is disabled (Scored)
+    shell: sshd -T | grep x11forwarding
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^X11Forwarding\\s+"
+      line: "X11Forwarding no"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.7 Ensure SSH MaxAuthTries is set to 4 or less (Scored)
+    shell:  sshd -T | grep maxauthtries
+    register: out
+    failed_when: >
+     out.stdout.split(' ')[-1] | int > 4
+    changed_when: false
+    ignore_errors: true
+
+
+  - lineinfile:
+      state: present
+      regexp: "^MaxAuthTries\\s+"
+      line: "MaxAuthTries 4"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.8 Ensure SSH IgnoreRhosts is enabled (Scored)
+    shell:  sshd -T | grep ignorerhosts
+    register: out
+    failed_when: >
+     'yes' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      regexp: "^IgnoreRhosts\\s+"
+      line: "IgnoreRhosts yes"
+      state: present
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.9 Ensure SSH HostbasedAuthentication is disabled (Scored)
+    shell:  sshd -T | grep hostbasedauthentication
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      regexp: "^HostbasedAuthentication\\s+"
+      line: "HostbasedAuthentication no"
+      state: present
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.10 Ensure SSH root login is disabled (Scored)
+    shell:  sshd -T | grep permitrootlogin
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PermitRootLogin\\s+"
+      line: "PermitRootLogin no"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.11 Ensure SSH PermitEmptyPasswords is disabled (Scored)
+    shell:  sshd -T | grep permitemptypasswords
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PermitEmptyPasswords\\s+"
+      line: "PermitEmptyPasswords no"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.12 Ensure SSH PermitUserEnvironment is disabled (Scored)
+    shell:  sshd -T | grep permituserenvironment
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PermitUserEnvironment\\s+"
+      line: "PermitUserEnvironment no"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.13 Ensure only strong Ciphers are used (Scored)
+    shell:  sshd -T | grep ciphers
+    register: out
+    failed_when: >
+     out.stdout | length ==0
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^Ciphers\\s+"
+      line: "Ciphers {{section5213}}"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.14 Ensure only strong MAC algorithms are used (Scored)
+    shell:  sshd -T | grep -i "MACs"
+    register: out
+    failed_when: >
+     out.stdout | length ==0
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^Macs\\s+"
+      line: "Macs {{section5214}}"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.15 Ensure only strong Key Exchange algorithms are used (Scored)
+    shell:  sshd -T | grep kexalgorithms
+    register: out
+    failed_when: >
+     out.stdout | length ==0
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^KexAlgorithms\\s+"
+      line: "KexAlgorithms {{section5215}}"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.16 Ensure SSH Idle Timeout Interval is configured (Scored)
+    shell:  sshd -T | grep clientaliveinterval;sshd -T | grep clientalivecountmax
+    register: out
+    failed_when: >
+     out.stdout.split('\n')[0].split(' ')[-1] | int <1 or out.stdout.split('\n')[0].split(' ')[-1]| int >300 or
+     out.stdout.split('\n')[-1].split(' ')[-1] | int >3
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^ClientAliveInterval\\s+"
+      line: "ClientAliveInterval 300"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - lineinfile:
+      state: present
+      regexp: "^ClientAliveCountMax\\s+"
+      line: "ClientAliveCountMax 0"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.17 Ensure SSH LoginGraceTime is set to one minute or less (Scored)
+    shell:  sshd -T | grep logingracetime
+    register: out
+    failed_when: >
+     out.stdout.split(' ')[-1] | int < 0 or out.stdout.split(' ')[-1] | int >60 
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^LoginGraceTime\\s+"
+      line: "LoginGraceTime 60"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.18 Ensure SSH access is limited (Scored)
+    shell:  sshd -T | grep allowgroups
+    register: out
+    failed_when: >
+     '{{section5218}}' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - name: 5.2.19 Ensure SSH warning banner is configured (Scored)
+    shell:  sshd -T | grep banner
+    register: out
+    failed_when: >
+     'none' in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^Banner\\s+"
+      line: "Banner /etc/issue.net"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.20 Ensure SSH PAM is enabled (Scored)
+    shell:  sshd -T | grep usepam
+    register: out
+    failed_when: >
+     'yes' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^UsePAM\\s+"
+      line: "UsePAM yes"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.21 Ensure SSH AllowTcpForwarding is disabled (Scored)
+    shell:  sshd -T | grep allowtcpforwarding
+    register: out
+    failed_when: >
+     'no' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^AllowTcpForwarding\\s+"
+      line: "AllowTcpForwarding no"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.22 Ensure SSH MaxStartups is configured (Scored)
+    shell:  sshd -T | grep maxstartups
+    register: out
+    failed_when: >
+     '10:30:60' not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^MaxStartups\\s+"
+      line: "MaxStartups 10:30:60"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.2.23 Ensure SSH MaxSessions is set to 4 or less (Scored)
+    shell:  sshd -T | grep -i maxsessions
+    register: out
+    failed_when: >
+     out.stdout.split(' ')[-1] | int > 4 
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^MaxSessions\\s+"
+      line: "MaxSessions 4"
+      dest: "/etc/ssh/sshd_config"
+    when: out is failed and remediation == 'YES'
+
+  - shell:  systemctl restart sshd
+    ignore_errors: true
+    when: remediation == 'YES'
+
+  - name: 5.3.1 Ensure password creation requirements are configured (Scored) 
+    shell: grep pam_cracklib.so /etc/pam.d/*-auth
+    register: out_6_3_2
+    failed_when: >
+      "password required pam_cracklib.so try_first_pass retry=3 minlen=14 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1" not in out_6_3_2.stdout
+    changed_when: false
+    ignore_errors: true
+
+  # - name: 5.3.2 Ensure lockout for failed password attempts is configured (Not Scored)
+  #   shell: grep pam_failock.so  /etc/pam.d/*-auth
+  #   register: out_6_3_2
+  #   failed_when: >
+  #     "auth required pam_faillock.so preauth audit silent deny=5 unlock_time=900" not in out_6_3_2.stdout
+  #   changed_when: false
+  #   ignore_errors: true
+
+  # - name: 5.3.3 Ensure password reuse is limited (Not Scored)
+  #   shell: grep remember /etc/pam.d/*-auth
+  #   register: out_6_3_4
+  #   failed_when: >
+  #     "password sufficient pam_unix.so remember=5" not in out_6_3_4.stdout
+  #   changed_when: false
+  #   ignore_errors: true
+
+  # - name: 5.3.4 Ensure password hashing algorithm is SHA-512 (Not Scored)
+  #   shell: grep sha512 /etc/pam.d/*-auth
+  #   register: out
+  #   failed_when: >
+  #     "sha512" not in out.stdout
+  #   changed_when: false
+  #   ignore_errors: true
+
+  - name: 5.4.1.1 Ensure password expiration is 365 days or less (Scored)
+    shell:  grep ^PASS_MAX_DAYS /etc/login.defs
+    register: out
+    failed_when: >
+     out.stdout.split('\t')[-1] | int >365 
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PASS_MAX_DAYS\\s+"
+      line: "PASS_MAX_DAYS\t365"
+      dest: "/etc/login.defs"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.1.2 Ensure minimum days between password changes is 7 or more (Scored)
+    shell:  grep ^PASS_MIN_DAYS /etc/login.defs
+    register: out
+    failed_when: >
+     out.stdout.split('\t')[-1] | int <7
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PASS_MIN_DAYS\\s+"
+      line: "PASS_MIN_DAYS\t7"
+      dest: "/etc/login.defs"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.1.3 Ensure password expiration warning days is 7 or more (Scored)
+    shell:  grep ^PASS_WARN_AGE /etc/login.defs
+    register: out
+    failed_when: >
+     out.stdout.split('\t')[-1] | int <7 
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^PASS_WARN_AGE\\s+"
+      line: "PASS_WARN_AGE  7"
+      dest: "/etc/login.defs"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.1.4 Ensure inactive password lock is 30 days or less (Scored)
+    shell:  useradd -D | grep INACTIVE
+    register: out
+    failed_when: >
+     out.stdout.split('=')[-1] | int <0  or out.stdout.split('=')[-1] | int >30
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        useradd -D -f 30
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.1.5 Ensure all users last password change date is in the past (Scored)
+    shell: |
+      for usr in $(cut -d: -f1 /etc/shadow); do [[ $(chage --list $usr | grep '^Last password change' | cut -d: -f2) > $(date) ]] && echo "$usr :$(chage -- list $usr | grep '^Last password change' | cut -d: -f2)"; done 
+    register: out
+    failed_when: >
+      out.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - name: 5.4.2 Ensure system accounts are secured (Scored)
+    shell: |
+      awk -F: '($1!="root" && $1!="sync" && $1!="shutdown" && $1!="halt" && $1!~/^\+/ && $3<'"$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)"' && $7!="'"$(which nologin)"'" && $7!="/bin/false") {print}' /etc/passwd;awk -F: '($1!="root" && $1!~/^\+/ && $3<'"$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)"') {print $1}' /etc/passwd | xargs -I '{}' passwd -S '{}' | awk '($2!="L" && $2!="LK") {print $1}'      
+    register: out
+    failed_when: >
+      out.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - name: 5.4.3 Ensure default group for the root account is GID 0 (Scored)
+    shell: |
+      grep "^root:" /etc/passwd | cut -f4 -d:
+    register: out
+    failed_when: >
+      "0" not in out.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - shell: |
+        usermod -g 0 root
+    ignore_errors: true
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.4 Ensure default user umask is 027 or more restrictive (Scored)
+    shell: grep "umask 027" /etc/profile /etc/profile.d/*.sh
+    register: out
+    failed_when: >
+      out.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - lineinfile:
+      state: present
+      regexp: "^umask\\s+"
+      line: "umask 027"
+      dest: "/etc/profile"
+    when: out is failed and remediation == 'YES'
+
+  - name: 5.4.5 Ensure default user shell timeout is 900 seconds or less (Scored)
+    shell:  grep "^TMOUT" /etc/profile 
+    register: out
+    failed_when: >
+     out.stdout | length ==0 or out.stdout.split('=')[-1] | int <0  or out.stdout.split(' ')[-1] | int >900
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^TMOUT\\s+"
+      line: "TMOUT=900"
+      dest: "/etc/profile"
+    when: out is failed and remediation == 'YES'
+
+  # - name: 5.5 Ensure root login is restricted to system console (Not Scored)
+  #   shell:  cat /etc/securetty
+  #   changed_when: false
+  #   ignore_errors: true
+
+  - name: 5.6 Ensure access to the su command is restricted (Scored)
+    shell: 'grep "auth required pam_wheel.so use_uid" /etc/pam.d/su | grep required'
+    register: out_6_5
+    failed_when: >
+      '#' in out_6_5.stdout
+    changed_when: false
+    ignore_errors: true
+
+  - lineinfile:
+      state: present
+      regexp: "^auth\\s+"
+      line: "auth required pam_wheel.so use_uid"
+      dest: "/etc/pam.d/su"
+    when: out_6_5 is failed and remediation == 'YES'

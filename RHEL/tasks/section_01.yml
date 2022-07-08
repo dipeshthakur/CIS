@@ -1,0 +1,710 @@
+---
+  - name: 1.1.1.1 Ensure mounting of cramfs filesystems is disabled (Scored)
+    shell: modprobe -n -v cramfs
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module cramfs not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install cramfs /bin/true' >/etc/modprobe.d/cramfs.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.2 Ensure mounting of freevxfs filesystems is disabled (Scored)
+    shell: modprobe -n -v freevxfs
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module freevxfs not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install freevxfs /bin/true' >/etc/modprobe.d/freevxfs.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.3 Ensure mounting of jffs2 filesystems is disabled (Scored)
+    shell: modprobe -n -v jffs2
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module jffs2 not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install jffs2 /bin/true' >/etc/modprobe.d/jffs2.conf;
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.4 Ensure mounting of hfs filesystems is disabled (Scored)
+    shell: modprobe -n -v hfs
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module hfs not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install hfs /bin/true' >/etc/modprobe.d/hfs.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.5 Ensure mounting of hfsplus filesystems is disabled (Scored)
+    shell: modprobe -n -v hfsplus
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module hfsplus not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install hfsplus /bin/true' >/etc/modprobe.d/hfsplus.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.6 Ensure mounting of squashfs filesystems is disabled (Scored)
+    shell: modprobe -n -v squashfs
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module squashfs not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install squashfs /bin/true' >/etc/modprobe.d/squashfs.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.1.7 Ensure mounting of udf filesystems is disabled (Scored)
+    shell: modprobe -n -v udf
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module udf not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install udf /bin/true' >/etc/modprobe.d/udf.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  # - name: 1.1.1.8 Ensure mounting of FAT filesystems is limited (Not Scored)
+  #   shell: modprobe -n -v vfat
+  #   register: modconf
+  #   failed_when: > 
+  #    "install /bin/true" not in modconf.stdout and "Module vfat not found" not in modconf.stderr
+  #   ignore_errors: true
+  #   changed_when: false
+
+  # - shell: |
+  #      echo 'install vfat /bin/true' >/etc/modprobe.d/vfat.conf;
+  #   ignore_errors: true
+  #   when: modconf is failed and remediation == 'YES'
+
+  - name: 1.1.2 Ensure /tmp is configured (Scored)
+    shell: grep "[[:space:]]/tmp[[:space:]]" /etc/fstab
+    register: out_112
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo '/dev/mapper/rootvg-tmplv /tmp xfs noexec,nosuid,nodev,defaults        0 0'>>/etc/fstab;mount /tmp
+    ignore_errors: true
+    when: out_112 is failed and remediation == 'YES'
+
+  - name: 1.1.3 Ensure nodev option set on /tmp partition (Scored)
+    shell: grep "[[:space:]]/tmp[[:space:]]" /etc/fstab
+    register: out_113
+    failed_when: >
+     'nodev' not in out_113.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - lineinfile:
+      regexp: "{{out_113.stdout}}"
+      line: "/dev/mapper/rootvg-tmplv /tmp xfs noexec,nosuid,nodev,defaults        0 0"
+      dest: "/etc/fstab"
+    ignore_errors: true
+    when: out_113 is failed and remediation == 'YES'
+
+  - shell: |
+      mount -o remount,nodev /tmp
+    ignore_errors: true
+    when: out_113 is failed and remediation == 'YES'
+
+  - name: 1.1.4 Ensure nosuid option set on /tmp partition (Scored) 
+    shell: grep "[[:space:]]/tmp[[:space:]]" /etc/fstab
+    register: out_114
+    failed_when: >
+     'nosuid' not in out_114.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - lineinfile:
+      regexp: "{{out_114.stdout}}"
+      line: "/dev/mapper/rootvg-tmplv /tmp xfs noexec,nosuid,nodev,defaults        0 0"
+      dest: "/etc/fstab"
+    ignore_errors: true
+    when: out_114 is failed and remediation == 'YES'
+
+  - shell: |
+      mount -o remount,nosuid /tmp
+    ignore_errors: true
+    when: out_114 is failed and remediation == 'YES'
+
+  - name: 1.1.5 Ensure noexec option set on /tmp partition (Scored) 
+    shell: grep "[[:space:]]/tmp[[:space:]]" /etc/fstab
+    register: out_115
+    failed_when: >
+     'noexec' not in out_115.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - lineinfile:
+      regexp: "{{out_115.stdout}}"
+      line: "/dev/mapper/rootvg-tmplv /tmp xfs noexec,nosuid,nodev,defaults        0 0"
+      dest: "/etc/fstab"
+    ignore_errors: true
+    when: out_115 is failed and remediation == 'YES'
+
+  - shell: |
+      mount -o remount,noexec /tmp
+    ignore_errors: true
+    when: out_115 is failed and remediation == 'YES'
+
+  - name: 1.1.6 Ensure separate partition exists for /var (Scored)
+    shell: grep "[[:space:]]/var[[:space:]]" /etc/fstab
+    register: out_115
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo '/dev/mapper/rootvg-varlv /var                    xfs     defaults        0 0' >> /etc/fstab; mount /var
+    ignore_errors: true
+    when: out_115 is failed and remediation == 'YES'
+
+  - name: 1.1.7 Ensure separate partition exists for /var/tmp (Scored)
+    shell:  grep -e "^/tmp[[:space:]]" /etc/fstab | grep /var/tmp 
+    register: out_117
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #      echo 'tmpfs /tmp tmpfs defaults,rw,nosuid,nodev,noexec,relatime 0 0' >> /etc/fstab; mount /var
+  #   ignore_errors: true
+  #   when: out_117 is failed and remediation == 'YES'
+
+  - name: 1.1.8 Ensure nodev option set on /var/tmp partition (Scored)
+    shell: grep -e "^/tmp[[:space:]]" /etc/fstab | grep /var/tmp 
+    register: out_118
+    failed_when: >
+     'nodev' not in out_118.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,nodev /var/tmp
+  #   ignore_errors: true
+  #   when: out_118 is failed and remediation == 'YES'
+
+  - name: 1.1.9 Ensure nosuid option set on /var/tmp partition (Scored)
+    shell: grep -e "^/tmp[[:space:]]" /etc/fstab | grep /var/tmp 
+    register: out_119
+    failed_when: >
+     'nosuid' not in out_119.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,nosuid /var/tmp
+  #   ignore_errors: true
+  #   when: out_119 is failed and remediation == 'YES'
+
+  - name: 1.1.10 Ensure noexec option set on /var/tmp partition (Scored)
+    shell: grep -e "^/tmp[[:space:]]" /etc/fstab | grep /var/tmp 
+    register: out_1110
+    failed_when: >
+     'noexec' not in out_1110.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,noexec /var/tmp
+  #   ignore_errors: true
+  #   when: out_1110 is failed and remediation == 'YES'
+
+  - name: 1.1.11 Ensure separate partition exists for /var/log (Scored)
+    shell: grep "[[:space:]]/var/log[[:space:]]" /etc/fstab
+    register: out_1111
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #      echo 'tmpfs /tmp tmpfs defaults,rw,nosuid,nodev,noexec,relatime 0 0' >> /etc/fstab; mount /var
+  #   ignore_errors: true
+  #   when: out_1111 is failed and remediation == 'YES'
+
+  - name: 1.1.12 Ensure separate partition exists for /var/log/audit (Scored)
+    shell: grep "[[:space:]]/var/log/audit[[:space:]]" /etc/fstab
+    register: out_1112
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #      echo 'tmpfs /tmp tmpfs defaults,rw,nosuid,nodev,noexec,relatime 0 0' >> /etc/fstab; mount /var
+  #   ignore_errors: true
+  #   when: out_1112 is failed and remediation == 'YES'
+
+  - name: 1.1.13 Ensure separate partition exists for /home (Scored)
+    shell: grep "[[:space:]]/home[[:space:]]" /etc/fstab
+    register: out_1113
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo '/dev/mapper/rootvg-homelv /home                   xfs     nodev,defaults        0 0' >> /etc/fstab; mount /var
+    ignore_errors: true
+    when: out_1113 is failed and remediation == 'YES'
+
+  - name: 1.1.14 Ensure nodev option set on /home partition (Scored)
+    shell: grep "[[:space:]]/home[[:space:]]" /etc/fstab
+    register: out_1114
+    failed_when: >
+     'nodev' not in out_1114.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - lineinfile:
+      regexp: "{{out_1114.stdout}}"
+      line: "/dev/mapper/rootvg-homelv /home                   xfs     nodev,defaults        0 0"
+      dest: "/etc/fstab"
+    ignore_errors: true
+    when: out_1114 is failed and remediation == 'YES'
+
+  - shell: |
+      mount -o remount,nodev /home
+    ignore_errors: true
+    when: out_1114 is failed and remediation == 'YES'
+
+  - name: 1.1.15 Ensure nodev option set on /dev/shm partition (Scored)
+    shell: grep /dev/shm /etc/fstab
+    register: out_1115
+    failed_when: >
+     'nodev' not in out_1115.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,nodev /dev/shm
+  #   ignore_errors: true
+  #   when: out_1115 is failed and remediation == 'YES'
+
+  - name: 1.1.16 Ensure nosuid option set on /dev/shm partition (Scored)
+    shell: grep /dev/shm /etc/fstab
+    register: out_1116
+    failed_when: >
+     'nosuid' not in out_1116.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,nosuid /dev/shm
+  #   ignore_errors: true
+  #   when: out_1116 is failed and remediation == 'YES'
+
+  - name: 1.1.17 Ensure noexec option set on /dev/shm partition (Scored)
+    shell: grep /dev/shm /etc/fstab
+    register: out_1117
+    failed_when: >
+     'noexec' not in out_1117.stdout
+    ignore_errors: true
+    changed_when: false
+
+  # - shell: |
+  #     mount -o remount,noexec /dev/shm
+  #   ignore_errors: true
+  #   when: out_1117 is failed and remediation == 'YES'
+
+  # - name: 1.1.18 Ensure nodev option set on removable media partitions (Not Scored)
+  #   shell: mount | grep 'cdrom\|floppy' | grep -c 'nodev'
+  #   register: out_1117
+  #   failed_when: >
+  #    '0' in out_1117.stdout
+  #   ignore_errors: true
+  #   changed_when: false
+
+  # - name: 1.1.19 Ensure nosuid option set on removable media partitions (Not Scored)
+  #   shell: mount | grep 'cdrom\|floppy' | grep -c 'nosuid'
+  #   register: out_1117
+  #   failed_when: >
+  #    '0' in out_1117.stdout
+  #   ignore_errors: true
+  #   changed_when: false
+
+  # - name: 1.1.20 Ensure noexec option set on removable media partitions (Not Scored)
+  #   shell: mount | grep 'cdrom\|floppy' | grep -c 'noexec'
+  #   register: out_1117
+  #   failed_when: >
+  #    '0' in out_1117.stdout
+  #   ignore_errors: true
+  #   changed_when: false
+
+  - name: 1.1.21 Ensure sticky bit is set on all world-writable directories (Scored)
+    shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d \( -perm -0002 -a ! -perm -1000 \)
+    register: out1121
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+      df --local -P | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -type d \( -perm -0002 -a ! -perm -1000 \) 2>/dev/null | xargs -I '{}' chmod a+t '{}'
+    ignore_errors: true
+    when: out1121 is failed and remediation == 'YES'
+
+  - name: 1.1.22 Disable Automounting (Scored)
+    shell: ls /etc/rc*.d | grep autofs
+    register: out1122
+    failed_when: >
+     'autofs' in  out1122.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+      chkconfig autofs off;update-rc.d autofs disable;systemctl disable autofs
+    ignore_errors: true
+    when: out1122 is failed and remediation == 'YES'
+
+  - name: 1.1.23 Disable USB Storage (Scored)
+    shell: modprobe -n -v usb-storage
+    register: modconf
+    failed_when: > 
+     "install /bin/true" not in modconf.stdout and "Module usb-storage not found" not in modconf.stderr
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       echo 'install usb-storage /bin/true' >/etc/modprobe.d/usb-storage.conf;
+    ignore_errors: true
+    when: modconf is failed and remediation == 'YES'
+
+  - name: 1.2.1 Ensure package manager repositories are configured (Not Scored)
+    shell: zypper repos || yum repolist || apt-cache policy
+    register: modconf
+    failed_when: > 
+      modconf.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  # - name: 1.2.2 Ensure GPG keys are configured (Not Scored)
+  #   shell: zypper repos || rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n' || apt-key list
+  #   register: modconf
+  #   failed_when: > 
+  #     modconf.stdout | length == 0 
+  #   ignore_errors: true
+  #   changed_when: false
+
+  - name: 1.3.1 Ensure AIDE is installed (Scored)
+    shell: rpm -q aide || dpkg -s aide
+    register: prompt
+    failed_when: >
+      "not installed" in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       yum install aide -y;apt-get install aide -y;zypper install aide -y
+    ignore_errors: true
+    when: prompt is failed and remediation == 'YES'
+
+  - name: 1.3.2 Ensure filesystem integrity is regularly checked (Scored)
+    shell:  crontab -u root -l | grep aide
+    register: check_aide
+    failed_when: >
+     '/usr/sbin/aide --check' not in check_aide.stdout 
+    ignore_errors: true
+    changed_when: false
+
+  - cron:
+      name: "1.3.2 Ensure filesystem integrity is regularly checked (Scored)"
+      user: "root"
+      job: "/usr/sbin/aide --check"
+      minute: 0
+      hour: 5
+      weekday: "*"
+      day: "*"
+      month: "*"
+      state: present
+    ignore_errors: true
+    when: check_aide is failed and remediation == 'YES'
+
+  - name: 1.4.1 Ensure permissions on bootloader config are configured (Scored)
+    shell: (stat /boot/grub*/grub.cfg) | grep 0400
+    register: grubperm
+    failed_when: >
+      grubperm.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /boot/grub*/grub.cfg;chmod 400 /boot/grub*/grub.cfg
+    ignore_errors: true
+    when: grubperm is failed and remediation == 'YES'
+
+  - name: 1.4.2 Ensure bootloader password is set (Scored)
+    shell:  (grep "^\s*set superusers" /boot/grub*/grub.cfg && grep "^\s*password" /boot/grub*/grub.cfg) | grep "GRUB2_PASSWORD"
+    register: grubpass
+    failed_when: >
+      grubpass.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.4.3 Ensure authentication required for single user mode (Scored)
+    shell: '(grep ^root:[*\!]: /etc/shadow)'
+    register: single
+    failed_when: >
+      single.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  # - name: 1.4.4 Ensure interactive boot is not enabled (Not Scored)
+  #   shell: grep "^PROMPT_FOR_CONFIRM=" /etc/sysconfig/boot
+  #   register: prompt
+  #   failed_when: >
+  #     "PROMPT_FOR_CONFIRM=no" not in prompt.stdout
+  #   ignore_errors: true
+  #   changed_when: false
+
+  - name: 1.5.1 Ensure core dumps are restricted (Scored)
+    shell: grep "hard core" /etc/security/limits.conf; sysctl fs.suid_dumpable;grep "fs\.suid_dumpable" /etc/sysctl.conf /etc/sysctl.d/*
+    register: modconf
+    failed_when: > 
+      modconf.stdout_lines | length <3 or "fs.suid_dumpable = 0" not in modconf.stdout or "hard core 0" not in modconf.stdout
+    ignore_errors: true
+    changed_when: false
+
+
+  - copy:
+      dest: "/etc/security/limits.conf"
+      content: "* hard core 0\n"
+    ignore_errors: true
+    when: modconf is failed and remediation == "YES"
+
+  - pam_limits:
+      dest: "/etc/security/limits.conf"
+      limit_item: "core"
+      limit_type: "hard"
+      domain: "*"
+      value: "0"
+    ignore_errors: true
+    when: modconf is failed and remediation == "YES"
+
+  - sysctl:
+      ignoreerrors: yes
+      name: fs.suid_dumpable
+      value: 0
+      state: present
+    ignore_errors: true
+    when: modconf is failed and remediation == "YES"
+
+  - name: 1.5.2 Ensure XD/NX support is enabled (Scored)
+    shell:  "journalctl | grep 'protection: active'"
+    register: ndnx
+    failed_when: >
+      ndnx.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.5.3 Ensure address space layout randomization (ASLR) is enabled (Scored)
+    shell: sysctl kernel.randomize_va_space
+    register: prompt
+    failed_when: >
+      "2" not in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - sysctl:
+      ignoreerrors: yes
+      name: kernel.randomize_va_space
+      value: 2
+      state: present
+    ignore_errors: true
+    when: modconf is failed and remediation == "YES"
+
+  - name: 1.5.4 Ensure prelink is disabled (Scored)
+    shell: rpm -q prelink || dpkg -s prelink
+    register: prompt
+    failed_when: >
+      "not installed" not in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       yum remove prelink -y;apt-get remove prelink -y;zypper remove prelink -y
+    ignore_errors: true
+    when: prompt is failed and remediation == 'YES'
+
+  - name: 1.6.1.1 Ensure SELinux is installed (Scored)
+    shell: dpkg -s libselinux1 || rpm -q libselinux
+    register: prompt
+    failed_when: >
+      "not installed" in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       yum install libselinux -y;apt-get install libselinux1 -y;zypper install libselinux -y
+    ignore_errors: true
+    when: prompt is failed and remediation == 'YES'
+
+  - name: 1.6.2.1 Ensure SELinux is not disabled in bootloader configuration (Scored)
+    shell: grep "^\s*kernel" /boot/grub/menu.lst || grep "^\s*linux" /boot/grub2/grub.cfg
+    register: prompt
+    failed_when: >
+      "selinux=0" not in prompt.stdout or "enforcing=0" not in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.6.2.2 Ensure the SELinux state is enforcing (Scored)
+    shell: grep 'SELINUX=enforcing' /etc/selinux/config
+    register: set_selinux
+    failed_when: >
+     'SELINUX=enforcing' not in  set_selinux.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.6.2.3 Ensure SELinux policy is configured (Scored)
+    shell: grep SELINUXTYPE=targeted /etc/selinux/config
+    register: set_selinux
+    failed_when: >
+     'SELINUXTYPE=targeted' not in  set_selinux.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.6.2.4 Ensure SETroubleshoot is not installed (Scored)
+    shell: rpm -q setroubleshoot || dpkg -s setroubleshoot
+    register:  prompt
+    failed_when: >
+      "not installed" not in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+
+  - shell: |
+       yum remove setroubleshoot -y;apt-get remove setroubleshoot -y;zypper remove setroubleshoot -y
+    ignore_errors: true
+    when: prompt is failed and remediation == 'YES'
+
+  - name: 1.6.2.5 Ensure the MCS Translation Service (mcstrans) is not installed (Scored)
+    shell: rpm -q mcstrans || dpkg -s mcstrans
+    register:  prompt
+    failed_when: >
+      "not installed" not in prompt.stdout
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       yum remove mcstrans -y;apt-get remove mcstrans -y;zypper remove mcstrans -y
+    ignore_errors: true
+    when: prompt is failed and remediation == 'YES'
+
+  - name: 1.6.2.6 Ensure no unconfined daemons exist (Scored)
+    shell:  ps -eZ | grep -E "initrc" | grep -E -v -w "tr|ps|grep|bash|awk" | tr ':' ' ' | awk '{ print $NF }'
+    register: daemon
+    failed_when: >
+      daemon.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - name: 1.7.1.1 Ensure message of the day is configured properly (Scored)
+    shell:  grep -E -i '(\\v|\\r|\\m|\\s|$(grep "^ID=" /etc/os-release | cut -d= -f2 | sed -e "s/"//g"))' /etc/motd
+    register: daemon
+    failed_when: >
+      daemon.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+        echo "{{section1711r}}" > /etc/motd
+    ignore_errors: true
+    when: daemon is failed and remediation == 'YES'
+
+  - name: 1.7.1.2 Ensure local login warning banner is configured properly (Scored)
+    shell: grep -E -i '(\\v|\\r|\\m|\\s|$(grep "^ID=" /etc/os-release | cut -d= -f2 | sed -e "s/"//g"))' /etc/issue
+    register: daemon
+    failed_when: >
+      daemon.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+        echo "{{section1712r}}" > /etc/issue
+    ignore_errors: true
+    when: daemon is failed and remediation == 'YES'
+
+  - name: 1.7.1.3 Ensure remote login warning banner is configured properly (Scored)
+    shell: grep -E -i '(\\v|\\r|\\m|\\s|$(grep "^ID=" /etc/os-release | cut -d= -f2 | sed -e "s/"//g"))' /etc/issue.net
+    register: daemon
+    failed_when: >
+      daemon.stdout | length != 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+        echo "{{section1713r}}" > /etc/issue.net
+    ignore_errors: true
+    when: daemon is failed and remediation == 'YES'
+
+  - name: 1.7.1.4 Ensure permissions on /etc/motd are configured (Scored)
+    shell: (stat /etc/motd) | grep 0644
+    register: grubperm
+    failed_when: >
+      grubperm.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /etc/motd;chmod 644 /etc/motd
+    ignore_errors: true
+    when: grubperm is failed and remediation == 'YES'
+
+  - name: 1.7.1.5 Ensure permissions on /etc/issue are configured (Scored)
+    shell: (stat /etc/issue) | grep 0644
+    register: grubperm
+    failed_when: >
+      grubperm.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /etc/issue;chmod 644 /etc/issue
+    ignore_errors: true
+    when: grubperm is failed and remediation == 'YES'
+
+  - name: 1.7.1.6 Ensure permissions on /etc/issue.net are configured (Scored)
+    shell: (stat /etc/issue.net) | grep 0644
+    register: grubperm
+    failed_when: >
+      grubperm.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       chown root:root /etc/issue.net;chmod 644 /etc/issue.net
+    ignore_errors: true
+    when: grubperm is failed and remediation == 'YES'
+
+  - name: 1.7.2 Ensure GDM login banner is configured (Scored)
+    shell: cat /etc/gdm3/greeter.dconf-defaults | grep banner-message-enable=true
+    register: grubperm
+    failed_when: >
+      grubperm.stdout | length == 0 
+    ignore_errors: true
+    changed_when: false
+
+  - shell: |
+       mkdir /etc/gdm3;
+       echo "[org/gnome/login-screen]
+       banner-message-enable=true
+       banner-message-text='{{section1712r}}'" > /etc/gdm3/greeter.dconf-defaults
+    ignore_errors: true
+    when: grubperm is failed and remediation == 'YES'
